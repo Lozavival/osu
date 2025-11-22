@@ -221,7 +221,8 @@ namespace osu.Game.Rulesets.Osu
                         new OsuModSynesthesia(),
                         new OsuModDepth(),
                         new OsuModBloom(),
-                        new OsuModProgressiveSize()
+                        new OsuModProgressiveSize(),
+                        new OsuModRandomSize()
                     };
 
                 case ModType.System:
