@@ -1,35 +1,32 @@
-// Em osu.Game.Rulesets.Osu/Mods/OsuModProgressiveSize.cs
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// See the LICENCE file in the repository root for full licence text.
+
 using System;
-using System.Linq;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers; // Adicione este using, ele é necessário para o PlayfieldAdjustmentContainer
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Localisation;
 using osu.Game.Configuration;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Mods;
-using osu.Game.Rulesets.Objects;
-using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Rulesets.UI;
 using osuTK;
 
-// O namespace correto
 namespace osu.Game.Rulesets.Osu.Mods
 {
     public partial class OsuModProgressiveSize : Mod, IApplicableToDrawableRuleset<OsuHitObject>
     {
         public override string Name => "Progressive Size";
         public override string Acronym => "PS";
-        public override LocalisableString Description => "O tamanho dos círculos muda durante o mapa.";
+        public override LocalisableString Description => "The circles get progressively smaller.";
         public override ModType Type => ModType.Fun;
         public override double ScoreMultiplier => 1.0;
         public override IconUsage? Icon => FontAwesome.Solid.ArrowsAltV;
 
-        #region Configurações
-        [SettingSource("Tamanho Máximo", "O tamanho inicial e máximo dos círculos.")]
+        #region Settings
+        [SettingSource("Max Size", "The inicial and maximum size of the circles.")]
         public BindableNumber<float> MaxScale { get; } = new BindableFloat(1.5f)
         {
             MinValue = 1.0f,
@@ -37,7 +34,7 @@ namespace osu.Game.Rulesets.Osu.Mods
             Precision = 0.1f,
         };
 
-        [SettingSource("Tamanho Mínimo", "O tamanho mínimo que os círculos podem atingir.")]
+        [SettingSource("Min Size", "The minimal size of the circles.")]
         public BindableNumber<float> MinScale { get; } = new BindableFloat(0.5f)
         {
             MinValue = 0.1f,
@@ -45,7 +42,7 @@ namespace osu.Game.Rulesets.Osu.Mods
             Precision = 0.1f,
         };
 
-        [SettingSource("Velocidade de Diminuição", "Velocidade que o tamanho diminui (escala/segundo).")]
+        [SettingSource("Shrink Rate", "Rate at which the circles shrink (scale/second).")]
         public BindableNumber<float> ShrinkRate { get; } = new BindableFloat(0.1f)
         {
             MinValue = 0.01f,
@@ -53,7 +50,7 @@ namespace osu.Game.Rulesets.Osu.Mods
             Precision = 0.01f,
         };
 
-        [SettingSource("Recuperação por Miss", "O quanto o tamanho recupera ao errar.")]
+        [SettingSource("Miss Recovery", "How much size the circles recover after a miss.")]
         public BindableNumber<float> MissRecovery { get; } = new BindableFloat(0.2f)
         {
             MinValue = 0.0f,
@@ -77,8 +74,6 @@ namespace osu.Game.Rulesets.Osu.Mods
                 drawableRuleset.Playfield.HitObjectContainer
             );
 
-            // A CORREÇÃO FINAL!
-            // Baseado no DrawableOsuRuleset.cs, este é o container correto.
             drawableRuleset.PlayfieldAdjustmentContainer.Add(updater);
 
             drawableRuleset.NewResult += updater.OnNewResult;
