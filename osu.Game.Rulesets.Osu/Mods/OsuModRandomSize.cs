@@ -3,67 +3,100 @@
 
 using System;
 using osu.Framework.Bindables;
+using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Localisation;
 using osu.Game.Configuration;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Osu.Objects;
+using osu.Game.Rulesets.UI;
 using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Mods
 {
-    public partial class OsuModRandomSize : Mod, IApplicableToDrawableHitObject
+    public partial class OsuModRandomSize : Mod, IApplicableToDrawableRuleset<OsuHitObject>
     {
         public override string Name => "Random Size";
         public override string Acronym => "RS";
-        public override LocalisableString Description => "Every circle spawns with a random size.";
+        public override LocalisableString Description => "Every circle has a random static size based on a seed.";
         public override ModType Type => ModType.Fun;
         public override double ScoreMultiplier => 1.0;
         public override IconUsage? Icon => FontAwesome.Solid.Dice;
 
         #region Settings
+
         [SettingSource("Min Size", "The minimum possible size of the circles.")]
         public BindableNumber<float> MinScale { get; } = new BindableFloat(0.5f)
         {
             MinValue = 0.1f,
-            MaxValue = 1.5f,
+            MaxValue = 1.0f,
             Precision = 0.1f,
         };
 
         [SettingSource("Max Size", "The maximum possible size of the circles.")]
         public BindableNumber<float> MaxScale { get; } = new BindableFloat(1.5f)
         {
-            MinValue = 0.5f,
+            MinValue = 1.0f,
             MaxValue = 2.5f,
             Precision = 0.1f,
         };
 
+        [SettingSource("Seed", "Change this to generate a different set of random sizes.")]
+        public BindableInt Seed { get; } = new BindableInt(0)
+        {
+            MinValue = 0,
+            MaxValue = int.MaxValue,
+            Precision = 1,
+        };
         #endregion
 
-        public void ApplyToDrawableHitObject(DrawableHitObject drawable)
+        public void ApplyToDrawableRuleset(DrawableRuleset<OsuHitObject> drawableRuleset)
         {
-            if (drawable.HitObject is not OsuHitObject osuObject)
-                return;
+            var updater = new OsuModRandomSizeUpdater(
+                MinScale,
+                MaxScale,
+                Seed,
+                drawableRuleset.Playfield.HitObjectContainer
+            );
 
-            // DETERMINISM:
-            // We create a random seed based on the object's StartTime. 
-            // This ensures that if you play the map again or watch a replay, 
-            // this specific circle will always have the same "random" size.
-            int seed = (int)osuObject.StartTime;
-            var random = new Random(seed);
+            drawableRuleset.PlayfieldAdjustmentContainer.Add(updater);
+        }
 
-            // Calculate the random scale within the range
-            float range = MaxScale.Value - MinScale.Value;
-            // Ensure Max is actually higher than Min to prevent crashes if settings are weird
-            if (range < 0) range = 0;
+        private partial class OsuModRandomSizeUpdater : Component
+        {
+            private readonly Bindable<float> minScale;
+            private readonly Bindable<float> maxScale;
+            private readonly Bindable<int> seed;
+            private readonly IHitObjectContainer hitObjectContainer;
 
-            float randomScale = (float)(random.NextDouble() * range) + MinScale.Value;
-
-            drawable.ApplyCustomUpdateState += (o, state) =>
+            public OsuModRandomSizeUpdater(Bindable<float> minScale, Bindable<float> maxScale, Bindable<int> seed, IHitObjectContainer hitObjectContainer)
             {
-                o.Scale = new Vector2(randomScale);
-            };
+                this.minScale = minScale;
+                this.maxScale = maxScale;
+                this.seed = seed;
+                this.hitObjectContainer = hitObjectContainer;
+            }
+
+            protected override void Update()
+            {
+                base.Update();
+
+                float range = maxScale.Value - minScale.Value;
+                if (range < 0) range = 0;
+
+                foreach (var dho in hitObjectContainer.AliveObjects)
+                {
+                    if (dho.HitObject is OsuHitObject osuObject)
+                    {
+                        int uniqueObjectSeed = seed.Value + (int)osuObject.StartTime;
+                        var random = new Random(uniqueObjectSeed);
+
+                        float randomScale = (float)(random.NextDouble() * range) + minScale.Value;
+                        dho.Scale = new Vector2(randomScale);
+                    }
+                }
+            }
         }
     }
 }
