@@ -24,6 +24,15 @@ namespace osu.Game.Rulesets.Osu.Mods
         public override ModType Type => ModType.Fun;
         public override double ScoreMultiplier => 1.0;
         public override IconUsage? Icon => FontAwesome.Solid.ArrowsAltV;
+        public override Type[] IncompatibleMods => new Type[]
+        {
+            typeof(OsuModGrow),
+            typeof(OsuModDeflate),
+            typeof(OsuModTraceable),
+            typeof(OsuModDepth),
+            typeof(OsuModAutoplay),
+            typeof(OsuModAutopilot)
+        };
 
         #region Settings
         [SettingSource("Max Size", "The inicial and maximum size of the circles.")]
